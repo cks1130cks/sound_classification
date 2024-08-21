@@ -1,0 +1,15 @@
+
+torch
+librosa
+transformers
+requests
+soundfile
+matplotlib
+tqdm
+scikit-learn
+seaborn
+tensorflow
+pydub
+scipy
+IPython
+pandas

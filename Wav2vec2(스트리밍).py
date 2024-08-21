@@ -57,6 +57,9 @@ class AudioClassifier(torch.nn.Module):
         x = self.fc(x)
         return x
 
+
+
+
 # 오디오 파일 로드 및 필터 적용
 def load_audio(file_path, cutoff=2000):
     signal, sr = librosa.load(file_path, sr=16000)
@@ -90,6 +93,7 @@ def predict(audio_signal, sr):
     label_one_probability = probabilities[:, 1].item()
     return label_one_probability
 
+
 # 장치 설정
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -99,12 +103,14 @@ processor = Wav2Vec2Processor.from_pretrained(model_name)
 model = Wav2Vec2Model.from_pretrained(model_name).to(device)
 
 
+
 # 분류기 인스턴스 생성 및 모델 로드
 num_classes = 2
 feature_dim = model.config.hidden_size
 classifier = AudioClassifier(feature_dim, num_classes).to(device)
-classifier.load_state_dict(torch.load(r"C:\Users\SKT038\Desktop\test\audio_classifier.pth"))  # 학습된 분류기 파라미터 로드
 
+# 학습된 분류기 파라미터 로드
+classifier.load_state_dict(torch.load(r"C:\Users\SKT038\Desktop\test\audio_classifier.pth"))
 
 
 
@@ -136,11 +142,7 @@ with requests.get(stream_url, stream=True) as r:
                     hornet_prob = predict(audio,sr)
                     
                     if hornet_prob > 0.3:
-                        # 0.3 이상일 때, 지정된 폴더에 오디오 파일 저장
-                        save_audio(audio, sr, folder_path=r"C:\Users\SKT038\Desktop\새 폴더", filename=f"{cnt}_hornet.wav")
-                        cnt+=1
-                        # 추가 처리 (예: 비전 모델로 신호 전송)
-                        # signal to vision model
+                        #####이미지 디텍팅 필요#####
                         pass
                     print(hornet_prob)
                     

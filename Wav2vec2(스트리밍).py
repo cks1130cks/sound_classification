@@ -109,8 +109,8 @@ num_classes = 2
 feature_dim = model.config.hidden_size
 classifier = AudioClassifier(feature_dim, num_classes).to(device)
 
-# 학습된 분류기 파라미터 로드
-classifier.load_state_dict(torch.load(r"C:\Users\SKT038\Desktop\test\audio_classifier.pth"))
+# 모델을 CPU로 불러오기
+classifier.load_state_dict(torch.load(r"C:\Users\SKT038\Desktop\test\audio_classifier.pth", map_location=torch.device('cpu')))
 
 
 
@@ -118,9 +118,9 @@ classifier.load_state_dict(torch.load(r"C:\Users\SKT038\Desktop\test\audio_class
 stream_url = 'http://172.23.250.133:5000/audio'
 
 # 오디오 파일의 헤더 생성
-sample_rate = 16000  # 44.1kHz로 변경
+sample_rate = 16000  # 16000kHz로 변경
 bits_per_sample = 16  # 16 bits
-channels = 2  # 스테레오
+channels = 1  # 스테레오
 wav_header = generate_wav_header(sample_rate, bits_per_sample, channels)
 
 # 누적된 데이터를 저장할 버퍼

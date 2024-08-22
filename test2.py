@@ -163,8 +163,8 @@ async def audio_detect(stream_url):
     # 오디오 파일의 헤더 생성
     sample_rate = 16000  # 44.1kHz로 변경
     bits_per_sample = 16  # 16 bits
-    channels = 2  # 스테레오
-    wav_header = generate_wav_header(sample_rate, bits_per_sample, channels)
+    channels = 1  # 스테레오
+    wav_header = generate_wav_header(44100, bits_per_sample, channels)
 
     # 누적된 데이터를 저장할 버퍼
     audio_buffer = BytesIO()
@@ -177,7 +177,7 @@ async def audio_detect(stream_url):
                 audio_buffer.write(chunk)  # 스트리밍 데이터를 버퍼에 기록
 
                 # 데이터를 누적하여 일정량 이상 쌓였을 때 디코딩 시도
-                if audio_buffer.tell() > len(wav_header) + (sample_rate * 2 * channels * bits_per_sample // 8 * 2):  # 2초 분량의 데이터가 쌓였을 때 시도
+                if audio_buffer.tell() > len(wav_header) + (sample_rate * 5 * channels * bits_per_sample // 8):  # 2초 분량의 데이터가 쌓였을 때 시도
                     try:
                         audio_buffer.seek(0)
                         # librosa로 오디오 데이터 로드

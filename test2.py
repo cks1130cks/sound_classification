@@ -182,6 +182,7 @@ async def audio_detect(stream_url):
                         audio_buffer.seek(0)
                         # librosa로 오디오 데이터 로드
                         audio, sr = librosa.load(audio_buffer, sr=sample_rate)
+                        
                         hornet_prob = predict(audio,sr)
                         
                         if hornet_prob > 0.3:

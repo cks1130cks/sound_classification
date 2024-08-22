@@ -19,11 +19,22 @@ def load_audio(file_path, cutoff=2000):
 
 # 저주파 필터 함수
 def low_pass_filter(audio, sr, cutoff=2000):
-    audio_fft = np.fft.rfft(audio)
-    frequencies = np.fft.rfftfreq(len(audio), 1/sr)
-    audio_fft[frequencies > cutoff] = 0
-    filtered_audio = np.fft.irfft(audio_fft)
-    return filtered_audio
+    # 푸리에 변환 수행
+    audio_fft = np.fft.fft(audio)
+    frequencies = np.fft.fftfreq(len(audio), 1/sr)
+    
+    # 0Hz ~ cutoff 주파수 범위 선택
+    mask = (frequencies >= 0) & (frequencies <= cutoff)
+    
+    # 주파수 범위 내의 성분만 남기고, 나머지는 0으로 설정
+    filtered_audio_fft = np.zeros_like(audio_fft)
+    filtered_audio_fft[mask] = audio_fft[mask]
+    
+    # 역 푸리에 변환 수행
+    filtered_audio = np.fft.ifft(filtered_audio_fft)
+    
+    # 실수부만 반환 (오차로 인해 소수의 허수부가 생길 수 있음)
+    return np.real(filtered_audio)
 
 # 오디오 데이터 처리
 def process_audio(signal):
@@ -47,7 +58,9 @@ class AudioClassifier(torch.nn.Module):
 num_classes = 2
 feature_dim = model.config.hidden_size
 classifier = AudioClassifier(feature_dim, num_classes).to(device)
-classifier.load_state_dict(torch.load(r"C:\Users\SKT038\Desktop\test\audio_classifier.pth"))  # 학습된 분류기 파라미터 로드
+# 모델을 CPU로 불러오기
+classifier.load_state_dict(torch.load(r"C:\Users\SKT038\Desktop\sound_classification\audio_classifier.pth", map_location=torch.device('cpu')))
+
 
 # 예측 함수
 def predict(file_path):
@@ -59,6 +72,6 @@ def predict(file_path):
     return pred.item()
 
 # 예측 실행
-file_path = r"C:\Users\SKT038\Desktop\sound_data\split_sound\hornet\[60FPS HQ 다큐] 장수말벌의 침입을 막는 꿀벌의 처절한 사투 - 320-1_part0_reverse.wav"
+file_path = r"C:\Users\SKT038\Desktop\test.wav"
 pred = predict(file_path)
 print(f"Predicted class: {pred}")

@@ -155,6 +155,7 @@ with requests.get(stream_url, stream=True) as r:
                     audio_buffer.seek(0)
                     # librosa로 오디오 데이터 로드
                     audio, sr = librosa.load(audio_buffer, sr=sample_rate)
+                    audio = audio * 2
                     hornet_prob = predict(audio,sr)
                     
                     # FFT 수행
@@ -184,6 +185,9 @@ with requests.get(stream_url, stream=True) as r:
                     plt.xlabel('Frequency (Hz)')
                     plt.ylabel('Amplitude')
                     plt.grid()
+                    # 이미지를 파일로 저장
+                    plt.savefig(rf'C:\Users\SKT038\Desktop\새 폴더\{cnt}_{hornet_prob[:, 1].item()}.png')  # 원하는 파일 이름과 형식으로 저장 가능
+
                     plt.show()
 
                     # 주파수 벡터 계산

@@ -100,9 +100,9 @@ def predict(file_path, output_dir="output_segments"):
         # 소프트맥스 함수를 통해 확률로 변환
         probabilities = torch.nn.functional.softmax(outputs, dim=1)
         
-        # 라벨 1의 확률이 0.4 이하인 경우 오디오 세그먼트를 저장
-        if probabilities[0][1].item() >= 0.8:
-            save_audio(segment, sr, output_dir, i)
+        # # 라벨 1의 확률이 0.4 이하인 경우 오디오 세그먼트를 저장
+        # if probabilities[0][1].item() >= 0.8:
+        #     save_audio(segment, sr, output_dir, i)
         
         pred = torch.argmax(probabilities, dim=1)
         print(f"Probabilities: {probabilities}")

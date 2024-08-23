@@ -104,18 +104,28 @@ def predict(audio_signal, sr):
 # 장치 설정
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# 모델 및 프로세서 로드
-model_name = "facebook/wav2vec2-large-960h-lv60-self"
-processor = Wav2Vec2Processor.from_pretrained(model_name)
-model = Wav2Vec2Model.from_pretrained(model_name).to(device)
+# # 모델 및 프로세서 로드
+# model_name = "facebook/wav2vec2-large-960h-lv60-self"
+# processor = Wav2Vec2Processor.from_pretrained(model_name)
+# model = Wav2Vec2Model.from_pretrained(model_name).to(device)
+
+# 로컬에 저장된 wav2vec2모델 사용
+local_model_path = "wav2vec2"
+# 로컬에서 프로세서와 모델 로드
+processor = Wav2Vec2Processor.from_pretrained(local_model_path)
+model = Wav2Vec2Model.from_pretrained(local_model_path).to(device)
 
 
 # 분류기 인스턴스 생성 및 모델 로드
 num_classes = 2
 feature_dim = model.config.hidden_size
 classifier = AudioClassifier(feature_dim, num_classes).to(device)
+
+#파라미터 주소 지정
+param = "audio_classifier.pth"
+
 # 모델을 CPU로 불러오기
-classifier.load_state_dict(torch.load(r"C:\Users\SKT038\Desktop\test\audio_classifier.pth", map_location=torch.device('cpu')))
+classifier.load_state_dict(torch.load(param, map_location=torch.device('cpu')))
 
 
 

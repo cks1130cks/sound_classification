@@ -65,11 +65,22 @@ def load_audio(file_path, cutoff=2000):
 
 # 저주파 필터 함수
 def low_pass_filter(audio, sr, cutoff=2000):
-    audio_fft = np.fft.rfft(audio)
-    frequencies = np.fft.rfftfreq(len(audio), 1/sr)
-    audio_fft[frequencies > cutoff] = 0
-    filtered_audio = np.fft.irfft(audio_fft)
-    return filtered_audio
+    # 푸리에 변환 수행
+    audio_fft = np.fft.fft(audio)
+    frequencies = np.fft.fftfreq(len(audio), 1/sr)
+    
+    # 0Hz ~ cutoff 주파수 범위 선택
+    mask = (frequencies >= 0) & (frequencies <= cutoff)
+    
+    # 주파수 범위 내의 성분만 남기고, 나머지는 0으로 설정
+    filtered_audio_fft = np.zeros_like(audio_fft)
+    filtered_audio_fft[mask] = audio_fft[mask]
+    
+    # 역 푸리에 변환 수행
+    filtered_audio = np.fft.ifft(filtered_audio_fft)
+    
+    # 실수부만 반환 (오차로 인해 소수의 허수부가 생길 수 있음)
+    return np.real(filtered_audio)
 
 # 오디오 데이터 처리
 def process_audio(signal):
@@ -87,7 +98,7 @@ def predict(audio_signal, sr):
     # 로짓을 확률로 변환
     probabilities = F.softmax(outputs, dim=1)
     # 1번 레이블(예: 'hornet' 클래스)의 확률을 반환
-    label_one_probability = probabilities[:, 1].item()
+    label_one_probability = probabilities[:, 0].item()
     return label_one_probability
 
 # 장치 설정
@@ -177,12 +188,11 @@ async def audio_detect(stream_url):
                 audio_buffer.write(chunk)  # 스트리밍 데이터를 버퍼에 기록
 
                 # 데이터를 누적하여 일정량 이상 쌓였을 때 디코딩 시도
-                if audio_buffer.tell() > len(wav_header) + (sample_rate * 5 * channels * bits_per_sample // 8):  # 2초 분량의 데이터가 쌓였을 때 시도
+                if audio_buffer.tell() > len(wav_header) + (44100 * 4 * channels * bits_per_sample // 8):  # 2초 분량의 데이터가 쌓였을 때 시도
                     try:
                         audio_buffer.seek(0)
                         # librosa로 오디오 데이터 로드
-                        audio, sr = librosa.load(audio_buffer, sr=sample_rate)
-                        
+                        audio, sr = load_audio(audio_buffer, sr=sample_rate)
                         hornet_prob = predict(audio,sr)
                         
                         if hornet_prob > 0.3:

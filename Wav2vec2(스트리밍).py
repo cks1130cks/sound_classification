@@ -61,8 +61,8 @@ class AudioClassifier(torch.nn.Module):
 
 
 # 오디오 파일 로드 및 필터 적용
-def load_audio(file_path, cutoff=2000):
-    signal, sr = librosa.load(file_path, sr=16000)
+def load_audio(file_path, sr = 16000, cutoff=2000):
+    signal, sr = librosa.load(file_path, sr=sr)
     filtered_signal = low_pass_filter(signal, sr, cutoff)
     return filtered_signal, sr
 
@@ -102,10 +102,8 @@ def predict(audio_signal, sr):
     outputs = classifier(features)
     # 로짓을 확률로 변환
     probabilities = F.softmax(outputs, dim=1)
-    # 소수점 4자리로 반올림
-    probabilities = torch.round(probabilities * 1000) / 1000
     # 1번 레이블(예: 'hornet' 클래스)의 확률을 반환
-    #label_one_probability = probabilities[:, 1].item()
+    #label_one_probability = probabilities[:, 0].item()
     #return label_one_probability
     return probabilities
 
@@ -113,10 +111,21 @@ def predict(audio_signal, sr):
 # 장치 설정
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# 모델 및 프로세서 로드
-model_name = "facebook/wav2vec2-large-960h-lv60-self"
-processor = Wav2Vec2Processor.from_pretrained(model_name)
-model = Wav2Vec2Model.from_pretrained(model_name).to(device)
+
+
+# # 모델 및 프로세서 로드
+# model_name = "facebook/wav2vec2-large-960h-lv60-self"
+# processor = Wav2Vec2Processor.from_pretrained(model_name)
+# model = Wav2Vec2Model.from_pretrained(model_name).to(device)
+
+# 로컬에 저장할 경로 설정
+local_model_path = r"C:\Users\SKT038\Desktop\wav2vec2"
+# 로컬에서 프로세서와 모델 로드
+processor = Wav2Vec2Processor.from_pretrained(local_model_path)
+model = Wav2Vec2Model.from_pretrained(local_model_path).to(device)
+
+
+
 
 
 
@@ -150,51 +159,48 @@ with requests.get(stream_url, stream=True) as r:
             audio_buffer.write(chunk)  # 스트리밍 데이터를 버퍼에 기록
 
             # 데이터를 누적하여 일정량 이상 쌓였을 때 디코딩 시도
-            if audio_buffer.tell() > len(wav_header) + (44100 * 5 * channels * bits_per_sample // 8):  # 4초 분량의 데이터가 쌓였을 때 시도
+            if audio_buffer.tell() > len(wav_header) + (44100 * 4 * channels * bits_per_sample // 8):  # 4초 분량의 데이터가 쌓였을 때 시도
                 try:
                     audio_buffer.seek(0)
                     # librosa로 오디오 데이터 로드
-                    audio, sr = librosa.load(audio_buffer, sr=sample_rate)
+                    audio, sr = load_audio(audio_buffer, sr=sample_rate)
                     audio = audio * 2
                     hornet_prob = predict(audio,sr)
                     
-                    # FFT 수행
-                    n = len(audio)
-                    audio_fft = np.fft.fft(audio)
-                    audio_fft = np.abs(audio[:n // 2])  # 대칭인 결과 중 절반만 사용
-                    # 주파수 벡터 계산
-                    freq = np.fft.fftfreq(n, 1/sample_rate)[:n // 2]
-                    # 0 ~ 2000 Hz 범위 필터링
-                    # 50 ~ 2000 Hz 범위 필터링
-                    freq_min = 5
-                    freq_max = 2000
-                    mask = (freq >= freq_min) & (freq <= freq_max)
-                    # 저장할 파일 경로와 이름 설정
-                    output_path1 = rf'C:\Users\SKT038\Desktop\새 폴더\filter_{cnt}.wav'
-                    output_path2 = rf'C:\Users\SKT038\Desktop\새 폴더\{cnt}.wav'
+                    # # FFT 수행
+                    # n = len(audio)
+                    # audio_fft = np.fft.fft(audio)
+                    # audio_fft = np.abs(audio[:n // 2])  # 대칭인 결과 중 절반만 사용
+                    # # 주파수 벡터 계산
+                    # freq = np.fft.fftfreq(n, 1/sample_rate)[:n // 2]
+                    # # 0 ~ 2000 Hz 범위 필터링
+                    # # 50 ~ 2000 Hz 범위 필터링
+                    # freq_min = 5
+                    # freq_max = 2000
+                    # mask = (freq >= freq_min) & (freq <= freq_max)
+                    # # 저장할 파일 경로와 이름 설정
+                    # output_path1 = rf'C:\Users\SKT038\Desktop\새 폴더\filter_{cnt}.wav'
+                    # output_path2 = rf'C:\Users\SKT038\Desktop\새 폴더\{cnt}.wav'
                     
-                    # 오디오 데이터를 파일로 저장
-                    sf.write(output_path1, low_pass_filter(audio,sr), sr)
-                    sf.write(output_path2, audio, sr)
+                    # # 오디오 데이터를 파일로 저장
+                    # sf.write(output_path1, low_pass_filter(audio,sr), sr)
+                    # sf.write(output_path2, audio, sr)
 
 
-                    # 시각화
-                    plt.figure(figsize=(10, 6))
-                    plt.plot(freq[mask], audio_fft[mask])
-                    plt.title('FFT of Audio Signal')
-                    plt.xlabel('Frequency (Hz)')
-                    plt.ylabel('Amplitude')
-                    plt.grid()
-                    # 이미지를 파일로 저장
-                    plt.savefig(rf'C:\Users\SKT038\Desktop\새 폴더\{cnt}_{hornet_prob[:, 1].item()}.png')  # 원하는 파일 이름과 형식으로 저장 가능
+                    # # 시각화
+                    # plt.figure(figsize=(10, 6))
+                    # plt.plot(freq[mask], audio_fft[mask])
+                    # plt.title('FFT of Audio Signal')
+                    # plt.xlabel('Frequency (Hz)')
+                    # plt.ylabel('Amplitude')
+                    # plt.grid()
+                    # plt.show()
 
-                    plt.show()
-
-                    # 주파수 벡터 계산
-                    freq = np.fft.fftfreq(n, 1/sample_rate)[:n // 2]
-                    #if hornet_prob > 0.3:
-                        #####이미지 디텍팅 필요#####
-                    #    pass
+                    # # 주파수 벡터 계산
+                    # freq = np.fft.fftfreq(n, 1/sample_rate)[:n // 2]
+                    # #if hornet_prob > 0.3:
+                    #     #####이미지 디텍팅 필요#####
+                    # #    pass
                     print(hornet_prob)
                     
                     # 버퍼 초기화 및 헤더 재작성

@@ -32,7 +32,7 @@ async def audio_start(req:AudioStart):
                 detail="already detecting"
             )
         del tasks[req.SN]
-    tasks[req.SN]=asyncio.create_task(audio_detect(req.SN,req.ip))       ####  detecting func
+    tasks[req.SN]=asyncio.create_task(audio_detect(req.ip))       ####  detecting func
 
     return {
         "message" : "suc"
@@ -60,4 +60,4 @@ async def vision_terminate(SN:str= Body(..., embed=True)):
 
 
 if __name__ == '__main__':
-    uvicorn.run("main:app", host="0.0.0.0", port=6000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

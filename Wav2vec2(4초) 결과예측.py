@@ -13,11 +13,26 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # processor = Wav2Vec2Processor.from_pretrained(model_name)
 # model = Wav2Vec2Model.from_pretrained(model_name).to(device)
 
+# 이 파이썬 코드가 저장된 파일의 디렉토리 가져오기
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 # 로컬에 저장된 wav2vec2모델 사용
-local_model_path = r"C:\Users\SKT038\Desktop\wav2vec2"
+local_model_path = os.path.join(script_dir, "wav2vec2")
 # 로컬에서 프로세서와 모델 로드
 processor = Wav2Vec2Processor.from_pretrained(local_model_path)
 model = Wav2Vec2Model.from_pretrained(local_model_path).to(device)
+
+
+# 분류기 인스턴스 생성 및 모델 로드
+num_classes = 2
+feature_dim = model.config.hidden_size
+classifier = AudioClassifier(feature_dim, num_classes).to(device)
+
+
+# 로컬에 저장된 wav2vec2모델 사용
+param = os.path.join(script_dir, "audio_classifier.pth")
+# 모델을 CPU로 불러오기
+classifier.load_state_dict(torch.load(param, map_location=torch.device('cpu')))
 
 
 
@@ -54,12 +69,7 @@ class AudioClassifier(torch.nn.Module):
         x = self.fc(x)
         return x
 
-# 분류기 인스턴스 생성 및 모델 로드
-num_classes = 2
-feature_dim = model.config.hidden_size
-classifier = AudioClassifier(feature_dim, num_classes).to(device)
-# 모델을 CPU로 불러오기
-classifier.load_state_dict(torch.load(r"C:\Users\SKT038\Desktop\sound_classification\audio_classifier.pth", map_location=torch.device('cpu')))
+
 
 
 # 오디오 신호를 4초 단위로 분할하는 함수
